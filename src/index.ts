@@ -107,8 +107,9 @@ async function run() {
     setOutput('url', rel.html_url);
     setOutput('id', rel.id.toString());
     setOutput('upload_url', rel.upload_url);
-  } catch (error) {
-    setFailed(error.message);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    setFailed(message);
   }
 }
 

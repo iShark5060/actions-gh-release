@@ -1,17 +1,14 @@
 {
-  "name": "action-gh-release",
+  "name": "actions-gh-release",
   "version": "1.0.1",
   "private": true,
   "description": "GitHub Action for creating GitHub Releases",
-  "keywords": [
-    "actions"
-  ],
-  "author": "softprops",
+  "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/iShark5060/action-gh-release.git"
+    "url": "git+https://github.com/iShark5060/actions-gh-release.git"
   },
-  "main": "lib/main.js",
+  "main": "dist/index.js",
   "scripts": {
     "validate": "node run-quality-checks.mjs",
     "lint": "oxlint .",
@@ -21,8 +18,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "build": "esbuild src/main.ts --bundle --platform=node --format=cjs --target=node24 --outfile=dist/index.js --minify",
-    "build-debug": "esbuild src/main.ts --bundle --platform=node --format=cjs --target=node24 --outfile=dist/index.js --sourcemap --keep-names",
+    "build": "esbuild src/index.ts --bundle --platform=node --format=cjs --target=node24 --outfile=dist/index.js --minify",
+    "build-debug": "esbuild src/index.ts --bundle --platform=node --format=cjs --target=node24 --outfile=dist/index.js --sourcemap --keep-names",
     "deps": "pnpm dlx npm-check-updates --target newest -u --reject @types/node && pnpm dlx npm-check-updates @types/node --target semver -u",
     "deps:update": "pnpm update -r --latest && pnpm update @types/node"
   },

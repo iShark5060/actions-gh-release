@@ -1,25 +1,12 @@
-<div align="center">
-  📦 :octocat:
-</div>
-<h1 align="center">
-  action gh-release
-</h1>
+# GH Release
 
-<p align="center">
-   A GitHub Action for creating GitHub Releases on Linux, Windows, and macOS virtual environments
-</p>
+GitHub Action for creating GitHub Releases on Linux, Windows, and macOS.
 
-<div align="center">
-  <img src="demo.png"/>
-</div>
+[![CI](https://github.com/iShark5060/actions-gh-release/actions/workflows/ci.yml/badge.svg)](https://github.com/iShark5060/actions-gh-release/actions/workflows/ci.yml)
 
-<div align="center">
-  <a href="https://github.com/softprops/action-gh-release/actions">
-		<img src="https://github.com/softprops/action-gh-release/workflows/Main/badge.svg"/>
-	</a>
-</div>
+> **Fork notice:** Maintained fork of [softprops/action-gh-release](https://github.com/softprops/action-gh-release) by Doug Tangren (MIT License).
 
-<br />
+> **Always reference a published version tag** (e.g. `@v1`). The bundled action code (`dist/index.js`) is only committed to release tags, so referencing `@main` will not work.
 
 - [🤸 Usage](#-usage)
   - [🚥 Limit releases to pushes to tags](#-limit-releases-to-pushes-to-tags)
@@ -54,9 +41,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Release
-        uses: softprops/action-gh-release@v3
+        uses: iShark5060/actions-gh-release@v1
         if: github.ref_type == 'tag'
 ```
 
@@ -75,9 +62,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Release
-        uses: softprops/action-gh-release@v3
+        uses: iShark5060/actions-gh-release@v1
 ```
 
 ### ⬆️ Uploading release assets
@@ -102,13 +89,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Build
         run: echo ${{ github.sha }} > Release.txt
       - name: Test
         run: cat Release.txt
       - name: Release
-        uses: softprops/action-gh-release@v3
+        uses: iShark5060/actions-gh-release@v1
         if: github.ref_type == 'tag'
         with:
           files: Release.txt
@@ -126,13 +113,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Build
         run: echo ${{ github.sha }} > Release.txt
       - name: Test
         run: cat Release.txt
       - name: Release
-        uses: softprops/action-gh-release@v3
+        uses: iShark5060/actions-gh-release@v1
         if: github.ref_type == 'tag'
         with:
           files: |
@@ -149,7 +136,7 @@ and keep the `files` patterns relative to that directory.
 
 ```yaml
 - name: Release
-  uses: softprops/action-gh-release@v3
+  uses: iShark5060/actions-gh-release@v1
   if: github.ref_type == 'tag'
   with:
     working_directory: dist
@@ -174,11 +161,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Generate Changelog
         run: echo "# Good things have arrived" > ${{ github.workspace }}-CHANGELOG.txt
       - name: Release
-        uses: softprops/action-gh-release@v3
+        uses: iShark5060/actions-gh-release@v1
         if: github.ref_type == 'tag'
         with:
           body_path: ${{ github.workspace }}-CHANGELOG.txt
@@ -196,7 +183,7 @@ comparison range does not match the release series you want to publish.
 
 ```yaml
 - name: Release
-  uses: softprops/action-gh-release@v3
+  uses: iShark5060/actions-gh-release@v1
   with:
     tag_name: stage-2026-03-15
     target_commitish: ${{ github.sha }}
@@ -303,4 +290,6 @@ permissions:
 Note that if you intend to run workflows on the release event (`on: { release: { types: [published] } }`), you need to use
 a personal access token for this action, as the [default `secrets.GITHUB_TOKEN` does not trigger another workflow](https://github.com/actions/create-release/issues/71).
 
-Doug Tangren (softprops) 2019
+## License
+
+MIT. See [LICENSE](LICENSE). Originally by Doug Tangren (softprops).

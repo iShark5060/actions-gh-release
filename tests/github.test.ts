@@ -694,7 +694,7 @@ describe('github', () => {
         config,
         mockReleaser,
         'https://uploads.github.com/repos/owner/repo/releases/1/assets',
-        '__tests__/release.txt',
+        'tests/release.txt',
         [],
       );
 

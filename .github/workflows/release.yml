@@ -58,7 +58,7 @@ jobs:
           subject-path: dist/index.js
 
       - name: Publish to release tag
-        uses: iShark5060/build-and-tag-action@v1
+        uses: iShark5060/actions-build-and-tag@v1
         env:
           GITHUB_TOKEN: ${{ github.token }}
 
