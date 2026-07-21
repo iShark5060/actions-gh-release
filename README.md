@@ -1,8 +1,12 @@
 # GH Release
 
-GitHub Action for creating GitHub Releases on Linux, Windows, and macOS.
-
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![CI](https://github.com/iShark5060/actions-gh-release/actions/workflows/ci.yml/badge.svg)](https://github.com/iShark5060/actions-gh-release/actions/workflows/ci.yml)
+![Node](https://img.shields.io/badge/Node-%3E%3D24-339933?logo=node.js&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-7.x-3178C6?logo=typescript&logoColor=white)
+[![Cursor](https://img.shields.io/badge/Cursor-IDE-141414?logo=cursor&logoColor=white)](https://cursor.com)
+
+GitHub Action for creating GitHub Releases on Linux, Windows, and macOS.
 
 > **Fork notice:** Maintained fork of [softprops/action-gh-release](https://github.com/softprops/action-gh-release) by Doug Tangren (MIT License).
 
@@ -289,6 +293,24 @@ permissions:
 
 Note that if you intend to run workflows on the release event (`on: { release: { types: [published] } }`), you need to use
 a personal access token for this action, as the [default `secrets.GITHUB_TOKEN` does not trigger another workflow](https://github.com/actions/create-release/issues/71).
+
+## Requirements
+
+- Node.js 24+
+- pnpm 11+
+
+## Scripts
+
+| Script              | Description                               |
+| ------------------- | ----------------------------------------- |
+| `pnpm run validate` | Format check, lint, typecheck, and tests. |
+| `pnpm run build`    | Bundle `src/` into `dist/index.js`.       |
+
+## Development
+
+Agent-oriented docs: [openwiki/quickstart.md](openwiki/quickstart.md).
+
+Engineering standards: AppBase `docs/org-standards/` with [personal-repos.md](https://github.com/Dark-Avian-Labs/AppBase/blob/main/docs/org-standards/personal-repos.md) (GitHub-hosted runners).
 
 ## License
 
