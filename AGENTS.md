@@ -8,7 +8,7 @@ GitHub Action for creating and updating GitHub Releases with asset uploads.
 - `src/github.ts` — release semantics, GitHub API interaction, race handling
 - `src/util.ts` — parsing and path normalization
 - `action.yml` — action metadata
-- `dist/index.js` — published CJS bundle (checked in on `main` for CI freshness checks)
+- `dist/index.js` — published CJS bundle (regenerate for release tags / intentional bundle updates)
 
 Keep behavior-specific logic in `src/github.ts` or `src/util.ts`; avoid growing `src/index.ts` with ad-hoc feature branches.
 
@@ -26,7 +26,7 @@ When behavior changes, update:
 - `README.md`
 - `action.yml`
 - tests under `tests/`
-- regenerate `dist/index.js` with `pnpm run build`
+- regenerate `dist/index.js` with `pnpm run build` on the release tag
 
 ## Verification
 
@@ -34,6 +34,8 @@ When behavior changes, update:
 pnpm run validate
 pnpm run build
 ```
+
+CI builds and verifies the bundle; committing an updated `dist/index.js` is not required to pass PR validate.
 
 ## Engineering standards
 
