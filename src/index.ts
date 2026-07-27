@@ -4,7 +4,7 @@ import { setFailed, setOutput } from '@actions/core';
 import { getOctokit } from '@actions/github';
 
 import { GitHubReleaser, release, finalizeRelease, upload, listReleaseAssets } from './github';
-import { isTag, parseConfig, paths, unmatchedPatterns, uploadUrl } from './util';
+import { errorMessage, isTag, parseConfig, paths, unmatchedPatterns, uploadUrl } from './util';
 
 async function run() {
   try {
@@ -66,7 +66,14 @@ async function run() {
       const currentAssets = rel.assets;
 
       const uploadFile = async (path: string) => {
-        const json = await upload(config, releaser, uploadUrl(rel.upload_url), path, currentAssets);
+        const json = await upload(
+          config,
+          releaser,
+          uploadUrl(rel.upload_url),
+          path,
+          currentAssets,
+          rel.id,
+        );
         return json ? (json.id as number) : undefined;
       };
 
@@ -108,8 +115,7 @@ async function run() {
     setOutput('id', rel.id.toString());
     setOutput('upload_url', rel.upload_url);
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : String(error);
-    setFailed(message);
+    setFailed(errorMessage(error));
   }
 }
 
