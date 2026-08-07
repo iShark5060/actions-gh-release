@@ -16,10 +16,10 @@ inputs:
     description: Gives a tag name. Defaults to github.ref_name. refs/tags/<name> values are normalized to <name>.
     required: false
   draft:
-    description: Keeps the release as a draft. Defaults to false. When reusing an existing draft release, set this to true to keep it draft; omit it to publish after upload. On immutable-release repositories, use this for prereleases that upload assets and publish the draft later.
+    description: Keeps the release as a draft. Defaults to false. When reusing an existing draft release, set this to true to keep it draft; omit it to publish after upload. Prereleases that include files are created as drafts automatically (immutable-safe), then published unless this is true.
     required: false
   prerelease:
-    description: Identify the release as a prerelease. Defaults to false
+    description: Identify the release as a prerelease. Defaults to false. Prereleases with files use draft-first upload; prereleases without files publish immediately unless draft is true.
     required: false
   preserve_order:
     description: Upload artifacts sequentially in the provided order. This does not control the final display order GitHub uses for release assets.
@@ -58,7 +58,13 @@ inputs:
     required: false
     default: ''
   append_body:
-    description: Append to existing body instead of overwriting it. Default is false.
+    description: Append to existing body instead of overwriting it. Default is false. Prefer body_concat_strategy when you need prepend/replace control.
+    required: false
+  body_concat_strategy:
+    description: How to combine workflow body with an existing release body on update. One of replace (default), append, or prepend. When unset, append_body true acts as append.
+    required: false
+  upload_checksums:
+    description: When true and files are uploaded, generate a SHA256SUMS file from the matched assets and upload it alongside them.
     required: false
   make_latest:
     description: Specifies whether this release should be set as the latest release for the repository. Drafts and prereleases cannot be set as latest. Can be `true`, `false`, or `legacy`. Uses GitHub api default if not provided
@@ -72,7 +78,13 @@ outputs:
   upload_url:
     description: URL for uploading assets to the release
   assets:
-    description: JSON array containing information about each uploaded asset, in the format given [here](https://docs.github.com/en/rest/reference/repos#upload-a-release-asset--code-samples) (minus the `uploader` field)
+    description: JSON array of uploaded assets (GitHub API asset objects minus uploader). May include digest when GitHub returns it (e.g. sha256:…).
+  tag_name:
+    description: Tag name associated with the release
+  created:
+    description: 'true if this run created a new release; false if an existing release was updated'
+  discussion_url:
+    description: URL of the discussion linked to the release, when present
 
 runs:
   using: node24

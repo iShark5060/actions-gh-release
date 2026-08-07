@@ -1,7 +1,12 @@
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'fs';
+import { tmpdir } from 'os';
+import { join } from 'path';
+
 import { assert, describe, expect, it } from 'vitest';
 
 import {
   alignAssetName,
+  concatReleaseBody,
   errorMessage,
   expandHomePattern,
   isTag,
@@ -12,8 +17,10 @@ import {
   parseInputFiles,
   paths,
   releaseBody,
+  resolveBodyConcatStrategy,
   unmatchedPatterns,
   uploadUrl,
+  writeSha256Sums,
 } from '../src/util';
 
 const normalizePath = (value: string) => value.replace(/\\/g, '/');
@@ -200,6 +207,7 @@ describe('util', () => {
       input_working_directory: undefined,
       input_append_body: false,
       input_body: undefined,
+      input_body_concat_strategy: undefined,
       input_body_path: undefined,
       input_draft: undefined,
       input_prerelease: undefined,
@@ -213,6 +221,7 @@ describe('util', () => {
       input_discussion_category_name: undefined,
       input_generate_release_notes: false,
       input_previous_tag: undefined,
+      input_upload_checksums: false,
       input_make_latest: undefined,
     };
 
@@ -496,5 +505,52 @@ describe('parseInputFiles edge cases', () => {
       'file2.txt',
       'file3.txt',
     ]);
+  });
+});
+
+describe('concatReleaseBody', () => {
+  it('replaces, appends, and prepends', () => {
+    expect(concatReleaseBody('old', 'new', 'replace')).toBe('new');
+    expect(concatReleaseBody('old', 'new', 'append')).toBe('old\nnew');
+    expect(concatReleaseBody('old', 'new', 'prepend')).toBe('new\nold');
+    expect(concatReleaseBody('', 'new', 'append')).toBe('new');
+    expect(concatReleaseBody('old', '', 'append')).toBe('old');
+  });
+
+  it('resolveBodyConcatStrategy respects append_body alias', () => {
+    expect(
+      resolveBodyConcatStrategy({
+        github_token: '',
+        github_ref: '',
+        github_repository: '',
+        input_append_body: true,
+        input_make_latest: undefined,
+      }),
+    ).toBe('append');
+    expect(
+      resolveBodyConcatStrategy({
+        github_token: '',
+        github_ref: '',
+        github_repository: '',
+        input_append_body: true,
+        input_body_concat_strategy: 'prepend',
+        input_make_latest: undefined,
+      }),
+    ).toBe('prepend');
+  });
+});
+
+describe('writeSha256Sums', () => {
+  it('writes gnu-style checksums', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'checksums-'));
+    try {
+      const file = join(dir, 'a.txt');
+      writeFileSync(file, 'hello\n');
+      const sums = writeSha256Sums([file], dir);
+      const content = readFileSync(sums, 'utf8');
+      expect(content).toMatch(/^[a-f0-9]{64}  a\.txt\n$/);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });

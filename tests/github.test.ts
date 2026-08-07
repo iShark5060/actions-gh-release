@@ -1295,6 +1295,7 @@ describe('github', () => {
         ...config,
         input_prerelease: true,
         input_draft: false,
+        input_files: [],
       };
       const createdRelease: Release = {
         id: 1,
@@ -1336,6 +1337,58 @@ describe('github', () => {
       expect(createReleaseSpy).toHaveBeenCalledWith(
         expect.objectContaining({
           draft: false,
+          prerelease: true,
+        }),
+      );
+    });
+
+    it('draft-firsts prereleases when files are provided (immutable-safe)', async () => {
+      const prereleaseConfig = {
+        ...config,
+        input_prerelease: true,
+        input_draft: false,
+        input_files: ['dist/*.zip'],
+      };
+      const createdRelease: Release = {
+        id: 2,
+        upload_url: 'test',
+        html_url: 'test',
+        tag_name: 'v1.0.0',
+        name: 'test',
+        body: 'test',
+        target_commitish: 'main',
+        draft: true,
+        prerelease: true,
+        assets: [],
+      };
+
+      let created = false;
+      const createReleaseSpy = vi.fn(async () => {
+        created = true;
+        return { data: createdRelease };
+      });
+      const mockReleaser: Releaser = {
+        getReleaseByTag: () => Promise.reject({ status: 404 }),
+        createRelease: createReleaseSpy,
+        updateRelease: () => Promise.reject('Not implemented'),
+        finalizeRelease: () => Promise.reject('Not implemented'),
+        allReleases: async function* () {
+          yield { data: created ? [createdRelease] : [] };
+        },
+        listReleaseAssets: () => Promise.reject('Not implemented'),
+        deleteReleaseAsset: () => Promise.reject('Not implemented'),
+        deleteRelease: () => Promise.reject('Not implemented'),
+        updateReleaseAsset: () => Promise.reject('Not implemented'),
+        uploadReleaseAsset: () => Promise.reject('Not implemented'),
+      } as const;
+
+      const result = await release(prereleaseConfig, mockReleaser, 1);
+
+      assert.equal(result.release.id, createdRelease.id);
+      assert.equal(result.created, true);
+      expect(createReleaseSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          draft: true,
           prerelease: true,
         }),
       );
@@ -1654,7 +1707,7 @@ describe('github', () => {
           },
         },
         expected:
-          'Cannot upload asset draft-false.txt to an immutable release. GitHub only allows asset uploads before a release is published, but draft prereleases publish with the release.published event instead of release.prereleased.',
+          'Cannot upload asset draft-false.txt to an immutable release. GitHub only allows asset uploads before a release is published. This action draft-firsts prereleases that include files; if you created the release outside this action, keep it as a draft (draft: true) until assets are uploaded, then publish and subscribe downstream workflows to release.published.',
       },
     ])('surfaces an actionable immutable-release error for a $name', async (testCase) => {
       const tempDir = mkdtempSync(join(tmpdir(), 'gh-release-immutable-'));

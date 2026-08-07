@@ -4,7 +4,15 @@ import { setFailed, setOutput } from '@actions/core';
 import { getOctokit } from '@actions/github';
 
 import { GitHubReleaser, release, finalizeRelease, upload, listReleaseAssets } from './github';
-import { errorMessage, isTag, parseConfig, paths, unmatchedPatterns, uploadUrl } from './util';
+import {
+  errorMessage,
+  isTag,
+  parseConfig,
+  paths,
+  unmatchedPatterns,
+  uploadUrl,
+  writeSha256Sums,
+} from './util';
 
 async function run() {
   try {
@@ -26,36 +34,27 @@ async function run() {
       }
     }
 
-    // const oktokit = GitHub.plugin(
-    //   require("@octokit/plugin-throttling"),
-    //   require("@octokit/plugin-retry")
-    // );
-
     const gh = getOctokit(config.github_token, {
-      //new oktokit(
       throttle: {
         onRateLimit: (retryAfter, options) => {
           console.warn(`Request quota exhausted for request ${options.method} ${options.url}`);
           if (options.request.retryCount === 0) {
-            // only retries once
             console.log(`Retrying after ${retryAfter} seconds!`);
             return true;
           }
         },
         onAbuseLimit: (retryAfter, options) => {
-          // does not retry, only logs a warning
           console.warn(`Abuse detected for request ${options.method} ${options.url}`);
         },
       },
     });
-    //);
     const releaser = new GitHubReleaser(gh);
     const releaseResult = await release(config, releaser);
     let rel = releaseResult.release;
     const releaseWasCreated = releaseResult.created;
     let uploadedAssetIds: Set<number> = new Set();
     if (config.input_files && config.input_files.length > 0) {
-      const files = paths(config.input_files, config.input_working_directory);
+      let files = paths(config.input_files, config.input_working_directory);
       if (files.length == 0) {
         if (config.input_fail_on_unmatched_files) {
           throw new Error(`⚠️ ${config.input_files} does not include a valid file.`);
@@ -63,6 +62,13 @@ async function run() {
           console.warn(`🤔 ${config.input_files} does not include a valid file.`);
         }
       }
+
+      if (config.input_upload_checksums && files.length > 0) {
+        const sumsPath = writeSha256Sums(files, config.input_working_directory || process.cwd());
+        console.log(`📝 Generated checksums at ${sumsPath}`);
+        files = [...files, sumsPath];
+      }
+
       const currentAssets = rel.assets;
 
       const uploadFile = async (path: string) => {
@@ -114,6 +120,9 @@ async function run() {
     setOutput('url', rel.html_url);
     setOutput('id', rel.id.toString());
     setOutput('upload_url', rel.upload_url);
+    setOutput('tag_name', rel.tag_name);
+    setOutput('created', String(releaseWasCreated));
+    setOutput('discussion_url', rel.discussion_url ?? '');
   } catch (error: unknown) {
     setFailed(errorMessage(error));
   }
