@@ -1,6 +1,8 @@
-import { statSync, readFileSync } from 'fs';
-import { homedir } from 'os';
+import { createHash } from 'crypto';
+import { statSync, readFileSync, writeFileSync } from 'fs';
+import { homedir, tmpdir } from 'os';
 import * as pathLib from 'path';
+import { basename, join } from 'path';
 
 import * as glob from 'glob';
 
@@ -26,8 +28,44 @@ export interface Config {
   input_generate_release_notes?: boolean;
   input_previous_tag?: string;
   input_append_body?: boolean;
+  input_body_concat_strategy?: 'replace' | 'append' | 'prepend';
+  input_upload_checksums?: boolean;
   input_make_latest: 'true' | 'false' | 'legacy' | undefined;
 }
+
+export type BodyConcatStrategy = 'replace' | 'append' | 'prepend';
+
+export const resolveBodyConcatStrategy = (config: Config): BodyConcatStrategy => {
+  if (config.input_body_concat_strategy) {
+    return config.input_body_concat_strategy;
+  }
+  if (config.input_append_body) {
+    return 'append';
+  }
+  return 'replace';
+};
+
+export const concatReleaseBody = (
+  existingBody: string,
+  workflowBody: string,
+  strategy: BodyConcatStrategy,
+): string => {
+  if (!workflowBody) {
+    return existingBody;
+  }
+  if (!existingBody) {
+    return workflowBody;
+  }
+  switch (strategy) {
+    case 'append':
+      return `${existingBody}\n${workflowBody}`;
+    case 'prepend':
+      return `${workflowBody}\n${existingBody}`;
+    case 'replace':
+    default:
+      return workflowBody;
+  }
+};
 
 export const errorMessage = (error: unknown): string => {
   if (error instanceof Error) {
@@ -136,8 +174,20 @@ export const parseConfig = (env: Env): Config => {
     input_generate_release_notes: env.INPUT_GENERATE_RELEASE_NOTES == 'true',
     input_previous_tag: env.INPUT_PREVIOUS_TAG?.trim() || undefined,
     input_append_body: env.INPUT_APPEND_BODY == 'true',
+    input_body_concat_strategy: parseBodyConcatStrategy(env.INPUT_BODY_CONCAT_STRATEGY),
+    input_upload_checksums: env.INPUT_UPLOAD_CHECKSUMS == 'true',
     input_make_latest: parseMakeLatest(env.INPUT_MAKE_LATEST),
   };
+};
+
+const parseBodyConcatStrategy = (
+  value: string | undefined,
+): 'replace' | 'append' | 'prepend' | undefined => {
+  const normalized = value?.trim().toLowerCase();
+  if (normalized === 'replace' || normalized === 'append' || normalized === 'prepend') {
+    return normalized;
+  }
+  return undefined;
 };
 
 const parseMakeLatest = (value: string | undefined): 'true' | 'false' | 'legacy' | undefined => {
@@ -219,4 +269,15 @@ export const normalizeTagName = (tag: string | undefined): string | undefined =>
 
 export const alignAssetName = (assetName: string): string => {
   return assetName.replace(/ /g, '.');
+};
+
+/** Write a GNU-style SHA256SUMS file for the given absolute paths; returns the sums file path. */
+export const writeSha256Sums = (files: string[], outputDir: string = tmpdir()): string => {
+  const lines = files.map((filePath) => {
+    const hash = createHash('sha256').update(readFileSync(filePath)).digest('hex');
+    return `${hash}  ${basename(filePath)}`;
+  });
+  const outPath = join(outputDir, 'SHA256SUMS');
+  writeFileSync(outPath, lines.join('\n') + (lines.length ? '\n' : ''), 'utf8');
+  return outPath;
 };

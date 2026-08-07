@@ -5,7 +5,16 @@ import { basename } from 'path';
 import { GitHub } from '@actions/github/lib/utils';
 import { lookup } from 'mime-types';
 
-import { alignAssetName, Config, errorMessage, isTag, normalizeTagName, releaseBody } from './util';
+import {
+  alignAssetName,
+  Config,
+  concatReleaseBody,
+  errorMessage,
+  isTag,
+  normalizeTagName,
+  releaseBody,
+  resolveBodyConcatStrategy,
+} from './util';
 
 type GitHub = InstanceType<typeof GitHub>;
 
@@ -77,6 +86,7 @@ export interface Release {
   draft: boolean;
   prerelease: boolean;
   assets: Array<{ id: number; name: string; label?: string | null }>;
+  discussion_url?: string | null;
 }
 
 export interface ReleaseResult {
@@ -415,7 +425,7 @@ const immutableReleaseAssetUploadMessage = (
   prerelease: boolean | undefined,
 ): string =>
   prerelease
-    ? `Cannot upload asset ${name} to an immutable release. GitHub only allows asset uploads before a release is published, but draft prereleases publish with the release.published event instead of release.prereleased. If you need prereleases with assets on an immutable-release repository, keep the release as a draft with draft: true, then publish it later from that draft and subscribe downstream workflows to release.published.`
+    ? `Cannot upload asset ${name} to an immutable release. GitHub only allows asset uploads before a release is published. This action draft-firsts prereleases that include files; if you created the release outside this action, keep it as a draft (draft: true) until assets are uploaded, then publish and subscribe downstream workflows to release.published.`
     : `Cannot upload asset ${name} to an immutable release. GitHub only allows asset uploads before a release is published, so upload assets to a draft release before you publish it.`;
 
 export const upload = async (
@@ -683,18 +693,15 @@ export const release = async (
 
     const tag_name = tag;
     const name = config.input_name || existingRelease.name || tag;
-    // revisit: support a new body-concat-strategy input for accumulating
-    // body parts as a release gets updated. some users will likely want this while
-    // others won't previously this was duplicating content for most which
-    // no one wants
+    // Body merge strategy: replace (default), append, or prepend.
+    // append_body:true remains an alias for append when strategy is unset.
     const workflowBody = releaseBody(config) || '';
     const existingReleaseBody = existingRelease.body || '';
-    let body: string;
-    if (config.input_append_body && workflowBody && existingReleaseBody) {
-      body = existingReleaseBody + '\n' + workflowBody;
-    } else {
-      body = workflowBody || existingReleaseBody;
-    }
+    const body = concatReleaseBody(
+      existingReleaseBody,
+      workflowBody,
+      resolveBodyConcatStrategy(config),
+    );
 
     const prerelease =
       config.input_prerelease !== undefined ? config.input_prerelease : existingRelease.prerelease;
@@ -1057,7 +1064,11 @@ async function createRelease(
   const name = config.input_name || tag;
   const body = releaseBody(config);
   const prerelease = config.input_prerelease;
-  const draft = prerelease === true ? config.input_draft === true : true;
+  // Non-prereleases always draft-first (immutable-safe).
+  // Prereleases with assets also draft-first so uploads work under immutable releases.
+  // Prereleases without assets stay published-at-create unless draft: true (preserves release.prereleased).
+  const wantsAssets = Array.isArray(config.input_files) && config.input_files.length > 0;
+  const draft = prerelease === true && !wantsAssets ? config.input_draft === true : true;
   const target_commitish = config.input_target_commitish;
   const make_latest = config.input_make_latest;
   let commitMessage: string = '';

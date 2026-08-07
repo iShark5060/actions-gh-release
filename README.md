@@ -220,7 +220,9 @@ The following are optional as `step.with` keys
 | `discussion_category_name` | String  | If specified, a discussion of the specified category is created and linked to the release. The value must be a category that already exists in the repository. For more information, see ["Managing categories for discussions in your repository."](https://docs.github.com/en/discussions/managing-discussions-for-your-community/managing-categories-for-discussions-in-your-repository)                                                                            |
 | `generate_release_notes`   | Boolean | Whether to automatically generate the name and body for this release. If name is specified, the specified name will be used; otherwise, a name will be automatically generated. If body is specified, the body will be pre-pended to the automatically generated notes. See the [GitHub docs for this feature](https://docs.github.com/en/repositories/releasing-projects-on-github/automatically-generated-release-notes) for more information                        |
 | `previous_tag`             | String  | Optional. When `generate_release_notes` is enabled, use this tag as GitHub's `previous_tag_name` comparison base. If omitted, GitHub chooses the comparison base automatically.                                                                                                                                                                                                                                                                                        |
-| `append_body`              | Boolean | Append to existing body instead of overwriting it                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `append_body`              | Boolean | Append to existing body instead of overwriting it. Prefer `body_concat_strategy` for prepend/replace control.                                                                                                                                                                                                                                                                                                                                                          |
+| `body_concat_strategy`     | String  | How to combine workflow body with an existing release body on update: `replace` (default), `append`, or `prepend`. When unset, `append_body: true` acts as `append`.                                                                                                                                                                                                                                                                                                   |
+| `upload_checksums`         | Boolean | When true and `files` are uploaded, generate a `SHA256SUMS` file from the matched assets and upload it alongside them.                                                                                                                                                                                                                                                                                                                                                 |
 | `make_latest`              | String  | Specifies whether this release should be set as the latest release for the repository. Drafts and prereleases cannot be set as latest. Can be `true`, `false`, or `legacy`. Uses GitHub api defaults if not provided                                                                                                                                                                                                                                                   |
 
 💡 When providing a `body` and `body_path` at the same time, `body_path` will be
@@ -234,11 +236,11 @@ will retain its original info.
 existing draft release, set `draft: true` to keep it draft; if `draft` is omitted,
 the action will publish that draft after uploading assets.
 
-💡 GitHub immutable releases lock assets after publication. Standard releases in this
-action already upload assets before publishing, but prereleases stay published by
-default so `release.prereleased` workflows keep firing. On an immutable-release
-repository, use `draft: true` for prereleases that upload assets, then publish that
-draft later and subscribe downstream workflows to `release.published`.
+💡 GitHub immutable releases lock assets after publication. This action creates
+standard releases as drafts, uploads assets, then publishes. Prereleases that
+include `files` follow the same draft-first path. Prereleases **without** files
+still publish immediately (so `release.prereleased` keeps firing) unless
+`draft: true` is set.
 
 💡 `files` is glob-based, so literal filenames that contain glob metacharacters such as
 `[` or `]` must be escaped in the pattern.
@@ -252,14 +254,17 @@ final asset name that GitHub stores or returns from the Releases API. In particu
 
 The following outputs can be accessed via `${{ steps.<step-id>.outputs }}` from this action
 
-| Name         | Type   | Description                                                                                                                                                                                                              |
-| ------------ | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `url`        | String | Github.com URL for the release                                                                                                                                                                                           |
-| `id`         | String | Release ID                                                                                                                                                                                                               |
-| `upload_url` | String | URL for uploading assets to the release                                                                                                                                                                                  |
-| `assets`     | String | JSON array containing information about each updated (newly uploaded or overwritten) asset, in the format given [here](https://docs.github.com/en/rest/releases/assets#get-a-release-asset) (minus the `uploader` field) |
+| Name             | Type   | Description                                                                                                                      |
+| ---------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------- |
+| `url`            | String | Github.com URL for the release                                                                                                   |
+| `id`             | String | Release ID                                                                                                                       |
+| `upload_url`     | String | URL for uploading assets to the release                                                                                          |
+| `assets`         | String | JSON array of updated assets (GitHub API shape minus `uploader`). May include `digest` when GitHub returns it (e.g. `sha256:…`). |
+| `tag_name`       | String | Tag name associated with the release                                                                                             |
+| `created`        | String | `true` if this run created a new release; `false` if an existing release was updated                                             |
+| `discussion_url` | String | Discussion URL linked to the release, when present                                                                               |
 
-As an example, you can use `${{ fromJSON(steps.<step-id>.outputs.assets)[0].browser_download_url }}` to get the download URL of the first asset.
+As an example, you can use `${{ fromJSON(steps.<step-id>.outputs.assets)[0].browser_download_url }}` to get the download URL of the first asset, or `.digest` when GitHub provides a content digest.
 
 #### environment variables
 
