@@ -35,7 +35,7 @@
     "@types/mime-types": "^3.0.1",
     "@types/node": "^24.13.3",
     "@vitest/coverage-v8": "^4.1.10",
-    "esbuild": "^0.28.1",
+    "esbuild": "^0.28.2",
     "oxfmt": "^0.62.0",
     "oxlint": "^1.77.0",
     "typescript": "^7.0.2",
