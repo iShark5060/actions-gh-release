@@ -6,7 +6,7 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-7.x-3178C6?logo=typescript&logoColor=white)
 [![Cursor](https://img.shields.io/badge/Cursor-IDE-141414?logo=cursor&logoColor=white)](https://cursor.com)
 
-GitHub Action for creating GitHub Releases on Linux, Windows, and macOS.
+Create GitHub Releases from a workflow on Linux, Windows, and macOS.
 
 > **Fork notice:** Maintained fork of [softprops/action-gh-release](https://github.com/softprops/action-gh-release) by Doug Tangren (MIT License).
 
