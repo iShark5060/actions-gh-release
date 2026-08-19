@@ -264,7 +264,6 @@ export class GitHubReleaser implements Releaser {
   }
 
   truncateReleaseNotes(input: string): string {
-    // release notes can be a maximum of 125000 characters
     const githubNotesMaxCharLength = 125000;
     return input.substring(0, githubNotesMaxCharLength - 1);
   }
@@ -438,10 +437,8 @@ export const upload = async (
 ): Promise<any> => {
   const [owner, repo] = config.github_repository.split('/');
   const { name, mime, size } = asset(path);
-  const currentAsset = currentAssets.find(
-    // GitHub can rewrite uploaded asset names, so compare against both the raw name
-    // GitHub returns and the restored label we set when available.
-    (currentAsset) => releaseAssetMatchesName(name, currentAsset),
+  const currentAsset = currentAssets.find((currentAsset) =>
+    releaseAssetMatchesName(name, currentAsset),
   );
   if (currentAsset) {
     if (config.input_overwrite_files === false) {
@@ -589,7 +586,6 @@ export const upload = async (
       }
     }
 
-    // Handle race conditions across concurrent workflows uploading the same asset.
     if (
       config.input_overwrite_files !== false &&
       errorStatus === 422 &&
@@ -693,8 +689,6 @@ export const release = async (
 
     const tag_name = tag;
     const name = config.input_name || existingRelease.name || tag;
-    // Body merge strategy: replace (default), append, or prepend.
-    // append_body:true remains an alias for append when strategy is unset.
     const workflowBody = releaseBody(config) || '';
     const existingReleaseBody = existingRelease.body || '';
     const body = concatReleaseBody(
@@ -752,15 +746,6 @@ export const release = async (
   }
 };
 
-/**
- * Finalizes a release by unmarking it as "draft" (if relevant)
- * after all artifacts have been uploaded.
- *
- * @param config - Release configuration as specified by user
- * @param releaser - The GitHub API wrapper for release operations
- * @param release - The existing release to be finalized
- * @param maxRetries - The maximum number of attempts to finalize the release
- */
 export const finalizeRelease = async (
   config: Config,
   releaser: Releaser,
@@ -821,14 +806,6 @@ export const finalizeRelease = async (
   }
 };
 
-/**
- * Lists assets belonging to a release.
- *
- * @param config - Release configuration as specified by user
- * @param releaser - The GitHub API wrapper for release operations
- * @param release - The existing release to be checked
- * @param maxRetries - The maximum number of attempts
- */
 export const listReleaseAssets = async (
   config: Config,
   releaser: Releaser,
@@ -856,21 +833,6 @@ export const listReleaseAssets = async (
   }
 };
 
-/**
- * Finds a release by tag name.
- *
- * Uses the direct getReleaseByTag API for O(1) lookup. Because GitHub does not
- * expose draft releases through that endpoint, a 404 falls back to a bounded
- * scan of recent releases and briefly retries in case the listing is not yet
- * consistent.
- *
- * @param releaser - The GitHub API wrapper for release operations
- * @param owner - The owner of the repository
- * @param repo - The name of the repository
- * @param tag - The tag name to search for
- * @param listingAttempts - The maximum number of listing attempts after a direct 404
- * @returns The release with the given tag name, or undefined if no release with that tag name is found
- */
 export async function findTagFromReleases(
   releaser: Releaser,
   owner: string,
@@ -1064,9 +1026,6 @@ async function createRelease(
   const name = config.input_name || tag;
   const body = releaseBody(config);
   const prerelease = config.input_prerelease;
-  // Non-prereleases always draft-first (immutable-safe).
-  // Prereleases with assets also draft-first so uploads work under immutable releases.
-  // Prereleases without assets stay published-at-create unless draft: true (preserves release.prereleased).
   const wantsAssets = Array.isArray(config.input_files) && config.input_files.length > 0;
   const draft = prerelease === true && !wantsAssets ? config.input_draft === true : true;
   const target_commitish = config.input_target_commitish;
@@ -1105,7 +1064,6 @@ async function createRelease(
     };
   } catch (error: unknown) {
     const errorStatus = getErrorStatus(error);
-    // presume a race with competing matrix runs
     console.log(`⚠️ GitHub release failed with status: ${errorStatus}`);
     console.log(errorMessage(error));
 
@@ -1122,12 +1080,10 @@ async function createRelease(
         throw new ReleaseCreationError(diagnostic, error);
 
       case 422:
-        // Check if this is a race condition with "already_exists" error
         if (hasValidationErrorCode(error, 'already_exists')) {
           console.log(
             '⚠️ Release already exists (race condition detected), retrying to find and update existing release...',
           );
-          // Don't throw - allow retry to find existing release
         } else {
           console.log('Skip retry - validation failed');
           throw error;

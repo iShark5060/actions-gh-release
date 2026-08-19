@@ -99,8 +99,6 @@ async function run() {
     console.log('Finalizing release...');
     rel = await finalizeRelease(config, releaser, rel, releaseWasCreated);
 
-    // Draft releases use temporary "untagged-..." URLs for assets.
-    // URLs will be changed to correct ones once the release is published.
     console.log('Getting assets list...');
     {
       let assets: any[] = [];

@@ -228,12 +228,6 @@ describe('util', () => {
     it('parses basic config', () => {
       assert.deepStrictEqual(
         parseConfig({
-          // note: inputs declared in actions.yml, even when declared not required,
-          // are still provided by the actions runtime env as empty strings instead of
-          // the normal absent env value one would expect. this breaks things
-          // as an empty string !== undefined in terms of what we pass to the api
-          // so we cover that in a test case here to ensure undefined values are actually
-          // resolved as undefined and not empty strings
           INPUT_TARGET_COMMITISH: '',
           INPUT_DISCUSSION_CATEGORY_NAME: '',
         }),

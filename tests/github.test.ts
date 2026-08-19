@@ -1857,7 +1857,6 @@ describe('github', () => {
       let createAttempts = 0;
       const mockReleaser: Releaser = {
         getReleaseByTag: ({ tag: _tag }) => {
-          // First call returns 404 (release doesn't exist yet), subsequent calls find it
           if (createAttempts === 0) {
             return Promise.reject({ status: 404 });
           }

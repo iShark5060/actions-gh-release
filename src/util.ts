@@ -10,7 +10,6 @@ export interface Config {
   github_token: string;
   github_ref: string;
   github_repository: string;
-  // user provided
   input_name?: string;
   input_tag_name?: string;
   input_repository?: string;
@@ -271,7 +270,6 @@ export const alignAssetName = (assetName: string): string => {
   return assetName.replace(/ /g, '.');
 };
 
-/** Write a GNU-style SHA256SUMS file for the given absolute paths; returns the sums file path. */
 export const writeSha256Sums = (files: string[], outputDir: string = tmpdir()): string => {
   const lines = files.map((filePath) => {
     const hash = createHash('sha256').update(readFileSync(filePath)).digest('hex');
