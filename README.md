@@ -313,7 +313,7 @@ a personal access token for this action, as the [default `secrets.GITHUB_TOKEN` 
 
 ## Development
 
-Agent-oriented docs: [openwiki/quickstart.md](openwiki/quickstart.md).
+Agent notes: [AGENTS.md](AGENTS.md).
 
 Engineering standards: AppBase `docs/org-standards/` with [personal-repos.md](https://github.com/Dark-Avian-Labs/AppBase/blob/main/docs/org-standards/personal-repos.md) (GitHub-hosted runners).
 

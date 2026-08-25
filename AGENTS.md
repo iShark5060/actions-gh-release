@@ -1,65 +1,19 @@
 # actions-gh-release
 
-GitHub Action for creating and updating GitHub Releases with asset uploads.
+## Org standards
 
-## Architecture
+CI/README/validate conventions live in AppBase `docs/org-standards/` with personal-repo overrides (`personal-repos.md`). GitHub-hosted runners, not Blacksmith. Action-publish track: `release` event → build-and-tag. Quality gate: `pnpm run validate`.
 
-- `src/index.ts` — orchestration: parse config, validate inputs, create/update release, upload assets, finalize, set outputs
-- `src/github.ts` — release semantics, GitHub API interaction, race handling
-- `src/util.ts` — parsing and path normalization
-- `action.yml` — action metadata
-- `dist/index.js` — published CJS bundle (regenerate for release tags / intentional bundle updates)
+## Overview
 
-Keep behavior-specific logic in `src/github.ts` or `src/util.ts`; avoid growing `src/index.ts` with ad-hoc feature branches.
+Creates/updates GitHub Releases and uploads assets (glob `files`, optional checksums). Maintained fork of softprops/action-gh-release. This fork’s published major is `@v1` (Node 24); do not confuse with upstream softprops `v2` / `v3` tags.
 
-## Core rules
+## Behavior
 
-- Prefer narrow behavior fixes over structural churn.
-- Reproduce current behavior on `main` before changing code.
-- Treat GitHub platform behavior as distinct from action behavior.
-- Be careful with parsing changes around `files`, path handling, and Windows compatibility.
+Prefer narrow fixes. Keep release/upload/race logic in `src/github.ts` and parsing/paths in `src/util.ts`. Do not grow ad-hoc branches in `src/index.ts`. Bundled `dist/index.js` is only on release tags. CI builds and verifies the bundle; committing `dist/` is not required for PR validate.
 
-## Contract sync
+New releases that will upload assets are created as **drafts**, assets upload, then finalize publishes. Prereleases **without** files publish immediately unless `draft: true` (so `release.prereleased` still fires). When reusing an existing draft: set `draft: true` to keep it draft; **omit** `draft` to publish after uploads.
 
-When behavior changes, update:
+`preserve_order` only serializes uploads; GitHub’s release UI/API order is not controlled by this action. Asset filenames with special/emoji characters may be rewritten by GitHub. Unset `name` / `body` / `prerelease` on update leave the existing release values alone. Prefer `body_concat_strategy` (`replace` / `append` / `prepend`) over `append_body`.
 
-- `README.md`
-- `action.yml`
-- tests under `tests/`
-- regenerate `dist/index.js` with `pnpm run build` on the release tag
-
-## Verification
-
-```bash
-pnpm run validate
-pnpm run build
-```
-
-CI builds and verifies the bundle; committing an updated `dist/index.js` is not required to pass PR validate.
-
-## Engineering standards
-
-Follow AppBase `docs/org-standards/` with personal-repo overrides (`personal-repos.md`):
-
-- Runners: `ubuntu-latest` / `windows-latest`
-- Checkout: `actions/checkout@v7`
-- Node setup: `actions/setup-node@v7`
-- Quality gate: `pnpm run validate`
-
-## OpenWiki
-
-This repository has documentation located in the /openwiki directory.
-
-Start here:
-
-- [OpenWiki quickstart](openwiki/quickstart.md)
-
-OpenWiki includes repository overview, architecture notes, workflows, domain concepts, operations, integrations, testing guidance, and source maps.
-
-When working in this repository, read the OpenWiki quickstart first, then follow its links to the relevant architecture, workflow, domain, operation, and testing notes.
-
-## Release
-
-1. Create a pre-release from `main`
-2. Verify the Release workflow completes
-3. Promote to a full release when ready
+`token: ""` clears the input override and falls back to env `GITHUB_TOKEN`. Composite wrappers should omit the input or use `${{ inputs.token || github.token }}`. Default `github.token` will not trigger other workflows on `release` events; use a PAT when that chaining is required. Be careful with `files` glob parsing (brace-aware), Windows `\`/`/`, and literal glob metacharacters.
