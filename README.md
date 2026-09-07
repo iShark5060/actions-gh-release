@@ -302,7 +302,7 @@ a personal access token for this action, as the [default `secrets.GITHUB_TOKEN` 
 ## Requirements
 
 - Node.js 24+
-- pnpm 11+
+- pnpm 12+
 
 ## Scripts
 
