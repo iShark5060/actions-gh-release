@@ -6,7 +6,9 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-7.x-3178C6?logo=typescript&logoColor=white&style=flat-square)
 [![Cursor](https://img.shields.io/badge/Cursor-IDE-141414?logo=cursor&logoColor=white&style=flat-square)](https://cursor.com)
 
-Creates GitHub Releases and uploads assets. Maintained fork of [softprops/action-gh-release](https://github.com/softprops/action-gh-release). This fork’s published major is `@v1` (Node 24) — not upstream `v2` / `v3`.
+Create GitHub Releases from a workflow on Linux, Windows, and macOS. Tag a build, attach the zip, done. Same action on every runner so a Windows native release and a Linux one look identical.
+
+This is a maintained fork of [softprops/action-gh-release](https://github.com/softprops/action-gh-release) by Doug Tangren (MIT License). This fork's published major is `@v1` (Node 24), not upstream `v2` / `v3`.
 
 ```yaml
 - uses: iShark5060/actions-gh-release@v1
