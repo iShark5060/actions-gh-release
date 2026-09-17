@@ -33,13 +33,13 @@
   },
   "devDependencies": {
     "@types/mime-types": "^3.0.1",
-    "@types/node": "^24.13.4",
-    "@vitest/coverage-v8": "^5.0.0",
+    "@types/node": "^24.13.5",
+    "@vitest/coverage-v8": "^5.0.1",
     "esbuild": "^0.28.2",
     "oxfmt": "^0.68.0",
     "oxlint": "^1.83.0",
     "typescript": "^7.0.2",
-    "vitest": "^5.0.0"
+    "vitest": "^5.0.1"
   },
   "engines": {
     "node": ">=26",
