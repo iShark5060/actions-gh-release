@@ -23,7 +23,7 @@ Needs `permissions: contents: write`. Add `discussions: write` if you set `discu
 
 ## Gotchas
 
-- Reference a **published tag** (`@v1`). `dist/index.js` is only on release tags; `@main` will not work.
+- Reference a **published tag** (`@v1`). `dist/index.cjs` is only on release tags; `@main` will not work.
 - New releases that upload `files` are created as **drafts**, assets go up, then the action publishes. Reusing an existing draft: set `draft: true` to keep it draft; **omit** `draft` to publish after upload. Prereleases **without** files publish immediately unless `draft: true`.
 - Default `github.token` will **not** trigger other `on: release` workflows. Use a PAT when you need that chain.
 - `files` is glob-based. Escape `[` / `]` in literal names. Windows accepts `\` and `/`. `working_directory` makes patterns relative to a subdirectory. GitHub may rewrite asset names that contain emoji or special characters.
