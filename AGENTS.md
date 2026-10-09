@@ -10,7 +10,7 @@ Creates/updates GitHub Releases and uploads assets (glob `files`, optional check
 
 ## Behavior
 
-Prefer narrow fixes. Keep release/upload/race logic in `src/github.ts` and parsing/paths in `src/util.ts`. Do not grow ad-hoc branches in `src/index.ts`. Bundled `dist/index.js` is only on release tags. CI builds and verifies the bundle; committing `dist/` is not required for PR validate.
+Prefer narrow fixes. Keep release/upload/race logic in `src/github.ts` and parsing/paths in `src/util.ts`. Do not grow ad-hoc branches in `src/index.ts`. Source is ESM (`"type": "module"`); the published Action entry must stay **CJS** (`dist/index.cjs`). Do not switch the bundle to ESM. `dist/index.cjs` is only on release tags. CI builds and verifies the bundle; committing `dist/` is not required for PR validate.
 
 New releases that will upload assets are created as **drafts**, assets upload, then finalize publishes. Prereleases **without** files publish immediately unless `draft: true` (so `release.prereleased` still fires). When reusing an existing draft: set `draft: true` to keep it draft; **omit** `draft` to publish after uploads.
 
